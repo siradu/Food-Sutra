@@ -1,64 +1,88 @@
 const FoodSutraLogic = {
-    // Ingredient Map: [Type, Avg Calories per serving, Ayurvedic Nature]
-    data: {
-        "milk": ["dairy", 150, "heavy"],
-        "dahi": ["curd", 100, "heavy"],
-        "yogurt": ["curd", 100, "heavy"],
-        "cheese": ["dairy", 200, "heavy"],
-        "paneer": ["dairy", 180, "heavy"],
-        "pizza": ["starch", 600, "heavy"],
-        "burger": ["starch", 500, "heavy"],
-        "noodles": ["starch", 350, "heavy"],
-        "rice": ["starch", 200, "light"],
-        "fish": ["fish", 250, "hot"],
-        "chicken": ["meat", 300, "heavy"],
-        "meat": ["meat", 400, "heavy"],
-        "banana": ["fruit", 100, "heavy"],
-        "mango": ["fruit", 120, "heavy"],
-        "lemon": ["acid", 10, "light"],
-        "honey": ["honey", 60, "dry"],
-        "fries": ["starch", 300, "heavy"],
-        "thali": ["meal", 800, "balanced"]
+    // CATEGORIES: Mapping keywords to their Ayurvedic & Nutritional profile
+    map: {
+        "paneer": { type: "DAIRY", cal: 180, bio: "Heavy/Cooling" },
+        "dahi": { type: "CURD", cal: 100, bio: "Sour/Heavy" },
+        "cheese": { type: "DAIRY", cal: 200, bio: "Heavy" },
+        "milk": { type: "DAIRY", cal: 150, bio: "Cooling" },
+        "fish": { type: "FISH", cal: 250, bio: "Heating" },
+        "chicken": { type: "MEAT", cal: 300, bio: "Heavy" },
+        "meat": { type: "MEAT", cal: 400, bio: "Very Heavy" },
+        "noodles": { type: "STARCH", cal: 350, bio: "Slow" },
+        "pizza": { type: "STARCH", cal: 600, bio: "Slow/Heavy" },
+        "burger": { type: "STARCH", cal: 500, bio: "Heavy" },
+        "lemon": { type: "ACID", cal: 10, bio: "Sharp" },
+        "honey": { type: "HONEY", cal: 60, bio: "Dry" },
+        "mango": { type: "FRUIT", cal: 120, bio: "Sweet" },
+        "banana": { type: "FRUIT", cal: 100, bio: "Heavy Sweet" },
+        "thali": { type: "MEAL", cal: 800, bio: "Mixed" }
     },
-    
+
+    // INTELLIGENT RULES with "Antidotes"
     rules: [
-        { pair: ["dairy", "fish"], reason: "Causes skin toxicity and blocks micro-channels (Srotas)." },
-        { pair: ["dairy", "fruit"], reason: "Causes fermentation and bloating. Avoid Shakes with heavy meals." },
-        { pair: ["dairy", "acid"], reason: "Instantly curdles in the gut, causing acid reflux." },
-        { pair: ["meat", "dairy"], reason: "Two conflicting animal proteins; very hard for the liver to process." },
-        { pair: ["honey", "meat"], reason: "Incompatible potency; creates digestive metabolic waste (Ama)." }
+        { 
+            a: "DAIRY", b: "FISH", 
+            score: "TOXIC",
+            msg: "Severe incompatibility. These create 'Ama' (toxins) that clog blood channels.",
+            antidote: "Drink warm ginger water if consumed." 
+        },
+        { 
+            a: "DAIRY", b: "FRUIT", 
+            score: "POOR",
+            msg: "Milk and fruit have different digestion speeds. This leads to gut fermentation.",
+            antidote: "Wait 2 hours between milk and fruit." 
+        },
+        { 
+            a: "MEAT", b: "DAIRY", 
+            score: "HEAVY",
+            msg: "Mixing two different animal proteins overloads the liver.",
+            antidote: "Add black pepper or cumin to aid digestion." 
+        },
+        { 
+            a: "CURD", b: "ACID", 
+            score: "ACIDIC",
+            msg: "Excessive sourness can aggravate Pitta (body heat).",
+            antidote: "A bit of jaggery (Gud) can help balance this." 
+        }
     ],
 
     check: function(text) {
-        const lowerText = text.toLowerCase();
-        let foundTypes = new Set();
-        let detectedNames = [];
-        let totalCalories = 0;
+        const input = text.toLowerCase();
+        let detected = [];
+        let totalCal = 0;
+        let activeTypes = {};
 
-        for (let [item, info] of Object.entries(this.data)) {
-            if (lowerText.includes(item)) {
-                foundTypes.add(info[0]);
-                detectedNames.push(item.charAt(0).toUpperCase() + item.slice(1));
-                totalCalories += info[1];
+        // Smart Detection
+        for (let [key, data] of Object.entries(this.map)) {
+            if (input.includes(key)) {
+                detected.push(key.toUpperCase());
+                totalCal += data.cal;
+                activeTypes[data.type] = true;
             }
         }
 
-        const typeArray = Array.from(foundTypes);
-        let conflicts = [];
+        const types = Object.keys(activeTypes);
+        let results = [];
+        let harmonyScore = 100;
 
-        for (let i = 0; i < typeArray.length; i++) {
-            for (let j = i + 1; j < typeArray.length; j++) {
+        // Harmony Calculation
+        for (let i = 0; i < types.length; i++) {
+            for (let j = i + 1; j < types.length; j++) {
                 const match = this.rules.find(r => 
-                    r.pair.includes(typeArray[i]) && r.pair.includes(typeArray[j])
+                    (r.a === types[i] && r.b === types[j]) || (r.a === types[j] && r.b === types[i])
                 );
-                if (match) conflicts.push({ a: typeArray[i], b: typeArray[j], reason: match.reason });
+                if (match) {
+                    results.push(match);
+                    harmonyScore -= 30;
+                }
             }
         }
 
-        return { 
-            found: [...new Set(detectedNames)], 
-            conflicts, 
-            calories: totalCalories 
+        return {
+            items: [...new Set(detected)],
+            analysis: results,
+            calories: totalCal,
+            score: Math.max(harmonyScore, 10)
         };
     }
 };
