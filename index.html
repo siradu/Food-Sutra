@@ -62,24 +62,30 @@
         };
 
         function renderResults(data) {
-            results.style.display = 'block';
-            document.getElementById('detected-items').innerHTML = 
-                "Detected: " + (data.found.join(', ') || 'Nothing found');
-            
-            const output = document.getElementById('analysis-output');
-            output.innerHTML = '';
+    results.style.display = 'block';
+    
+    // Header with Calorie Estimate
+    const calDisplay = data.calories > 0 ? `<br><span style="color:var(--gold); font-size:0.8rem;">Est. Energy: ~${data.calories} kcal</span>` : '';
+    
+    document.getElementById('detected-items').innerHTML = 
+        `Items: ${data.found.join(', ') || 'None'}` + calDisplay;
+    
+    const output = document.getElementById('analysis-output');
+    output.innerHTML = '';
 
-            if (data.conflicts.length > 0) {
-                data.conflicts.forEach(c => {
-                    output.innerHTML += `<div class="warning">
-                        <strong>Conflict: ${c.a.toUpperCase()} + ${c.b.toUpperCase()}</strong><br>
-                        ${c.reason}
-                    </div>`;
-                });
-            } else {
-                output.innerHTML = '<div class="safe">✓ Combinations look harmonious. Enjoy your meal!</div>';
-            }
-        }
+    if (data.conflicts.length > 0) {
+        data.conflicts.forEach(c => {
+            output.innerHTML += `<div class="warning">
+                <strong>Conflict: ${c.a.toUpperCase()} + ${c.b.toUpperCase()}</strong><br>
+                ${c.reason}
+            </div>`;
+        });
+    } else if (data.found.length > 0) {
+        output.innerHTML = '<div class="safe">✓ Ancient Wisdom Approved. This combination maintains your digestive fire (Agni).</div>';
+    } else {
+        output.innerHTML = '<div>Please try a clearer photo of the menu.</div>';
+    }
+}
     </script>
 </body>
 </html>
