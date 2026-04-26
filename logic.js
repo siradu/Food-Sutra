@@ -1,44 +1,38 @@
 const FoodSutraLogic = {
-    // Map of keywords
-    database: {
-        "paneer": { type: "DAIRY", cal: 180 },
-        "cheese": { type: "DAIRY", cal: 200 },
-        "milk": { type: "DAIRY", cal: 150 },
-        "dahi": { type: "CURD", cal: 100 },
-        "fish": { type: "FISH", cal: 250 },
-        "chicken": { type: "MEAT", cal: 300 },
-        "meat": { type: "MEAT", cal: 400 },
-        "pizza": { type: "STARCH", cal: 600 },
-        "burger": { type: "STARCH", cal: 500 },
-        "mango": { type: "FRUIT", cal: 120 },
-        "banana": { type: "FRUIT", cal: 100 },
-        "lemon": { type: "ACID", cal: 10 }
+    // Basic category mapping
+    ingredients: {
+        "paneer": "DAIRY", "cheese": "DAIRY", "milk": "DAIRY",
+        "dahi": "CURD", "yogurt": "CURD",
+        "fish": "FISH",
+        "chicken": "MEAT", "meat": "MEAT", "mutton": "MEAT",
+        "pizza": "STARCH", "burger": "STARCH", "noodles": "STARCH", "fries": "STARCH",
+        "mango": "FRUIT", "banana": "FRUIT", "apple": "FRUIT",
+        "lemon": "ACID", "lime": "ACID"
     },
 
-    // Rules
+    // Harmony rules
     rules: [
-        { a: "DAIRY", b: "FISH", severity: "TOXIC", msg: "Milk and Fish cause skin toxicity." },
-        { a: "DAIRY", b: "FRUIT", severity: "BAD", msg: "Milk and Fruit cause gut fermentation." },
-        { a: "MEAT", b: "DAIRY", severity: "HEAVY", msg: "Conflicting animal proteins overload liver." }
+        { a: "DAIRY", b: "FISH", severity: "TOXIC CLASH", msg: "Milk and Fish together create deep toxins in the blood." },
+        { a: "DAIRY", b: "FRUIT", severity: "DIGESTIVE CLASH", msg: "Milk and Fruit have different speeds, causing gut fermentation." },
+        { a: "MEAT", b: "DAIRY", severity: "HEAVY LOAD", msg: "Mixing different animal proteins overloads the digestive fire." },
+        { a: "CURD", b: "ACID", severity: "ACIDITY ALERT", msg: "Double sourness (Curd + Citrus) causes sharp spikes in body heat." }
     ],
 
-    calculate: function(text) {
+    runAnalysis: function(text) {
         const input = text.toLowerCase();
-        let foundItems = [];
-        let totalKcal = 0;
-        let activeTypes = new Set();
+        let itemsFound = [];
+        let typesFound = new Set();
 
-        for (let [key, val] of Object.entries(this.database)) {
-            if (input.includes(key)) {
-                foundItems.push(key.toUpperCase());
-                totalKcal += val.cal;
-                activeTypes.add(val.type);
+        for (let [keyword, type] of Object.entries(this.ingredients)) {
+            if (input.includes(keyword)) {
+                itemsFound.push(keyword.toUpperCase());
+                typesFound.add(type);
             }
         }
 
-        const typeList = Array.from(activeTypes);
-        let clashes = [];
-        let finalScore = 100;
+        const typeList = Array.from(typesFound);
+        let alerts = [];
+        let score = 100;
 
         for (let i = 0; i < typeList.length; i++) {
             for (let j = i + 1; j < typeList.length; j++) {
@@ -47,17 +41,16 @@ const FoodSutraLogic = {
                     (r.a === typeList[j] && r.b === typeList[i])
                 );
                 if (match) {
-                    clashes.push(match);
-                    finalScore -= 30;
+                    alerts.push(match);
+                    score -= 30;
                 }
             }
         }
 
         return {
-            foundItems: [...new Set(foundItems)],
-            clashes: clashes,
-            totalKcal: totalKcal, // Matches index.html exactly
-            finalScore: Math.max(finalScore, 10)
+            itemsFound: [...new Set(itemsFound)],
+            alerts: alerts,
+            harmonyScore: Math.max(score, 10)
         };
     }
 };
